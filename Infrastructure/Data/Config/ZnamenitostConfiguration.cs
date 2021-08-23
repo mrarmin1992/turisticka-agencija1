@@ -12,9 +12,8 @@ namespace Infrastructure.Data.Config
             builder.Property(p => p.Naziv).IsRequired().HasMaxLength(100);
             builder.Property(p => p.Opis).IsRequired().HasMaxLength(200);
             builder.Property(p => p.PictureUrl).IsRequired();
-            
-             builder.HasOne(s => s.Veomaznamenito).WithMany().HasForeignKey(p=>p.VeomaznamenitoId);
-              builder.HasOne(c => c.Nezaobilazno).WithMany().HasForeignKey(p=>p.NezaobilaznoId);
+            builder.HasOne(s => s.Veomaznamenito).WithMany().HasForeignKey(p=>p.VeomaznamenitoId);
+            builder.HasOne(c => c.Nezaobilazno).WithMany().HasForeignKey(p=>p.NezaobilaznoId);
         }
     }
 }

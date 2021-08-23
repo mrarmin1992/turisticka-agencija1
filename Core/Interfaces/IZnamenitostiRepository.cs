@@ -8,5 +8,7 @@ namespace Core.Interfaces
     {
         Task<Znamenitost> GetZnamenitostByIdAsync(int id);
         Task<IReadOnlyList<Znamenitost>> GetZnamenitostAsync();
+        Task<IReadOnlyList<Veomaznamenito>> GetVeomaznameniteAsync();
+        Task<IReadOnlyList<Nezaobilazno>> GetNezaobilazneAsync();
     }
 }

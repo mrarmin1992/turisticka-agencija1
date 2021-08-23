@@ -31,6 +31,18 @@ namespace API.Controllers
         {
             return await _repo.GetZnamenitostByIdAsync(id);
         }
+        [HttpGet("veomaznamenite")]
+
+        public async Task<ActionResult<IReadOnlyList<Veomaznamenito>>> GetVeomaznamenito()
+        {
+            return Ok(await _repo.GetVeomaznameniteAsync());
+        }
+         [HttpGet("nezaobilazne")]
+
+        public async Task<ActionResult<IReadOnlyList<Nezaobilazno>>> GetNezaobilazno()
+        {
+            return Ok(await _repo.GetNezaobilazneAsync());
+        }
 
     }
 }
