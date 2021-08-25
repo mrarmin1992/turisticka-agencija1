@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using API.Dtos;
+using AutoMapper;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Specifications;
@@ -18,10 +19,12 @@ namespace API.Controllers
         private readonly IGenericRepository<Znamenitost> _znamenitostRepo;
         private readonly IGenericRepository<Veomaznamenito> _veomaznamenitoRepo;
         private readonly IGenericRepository<Nezaobilazno> _nezaobilaznoRepo;
+        private readonly IMapper _mapper;
 
         public ZnamenitostiController(IGenericRepository<Znamenitost> znamenitostRepo,
-        IGenericRepository<Veomaznamenito> veomaznamenitoRepo, IGenericRepository<Nezaobilazno> nezaobilaznoRepo)
+        IGenericRepository<Veomaznamenito> veomaznamenitoRepo, IGenericRepository<Nezaobilazno> nezaobilaznoRepo, IMapper mapper)
         {
+            _mapper = mapper;
             _nezaobilaznoRepo = nezaobilaznoRepo;
             _veomaznamenitoRepo = veomaznamenitoRepo;
             _znamenitostRepo = znamenitostRepo;
@@ -29,36 +32,21 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<ZnamenitostiToReturnDto>>> GetZnamenitosti()
+        public async Task<ActionResult<IReadOnlyList<ZnamenitostiToReturnDto>>> GetZnamenitosti()
         {
             var spec = new veomaznameniteinezaobilazneSpecifications();
 
             var znamenitosti = await _znamenitostRepo.ListAsync(spec);
-            
-            return znamenitosti.Select(znamenitost => new ZnamenitostiToReturnDto {
-                Id = znamenitost.Id,
-               Naziv = znamenitost.Naziv,
-               Koordinate = znamenitost.Koordinate,
-               Opis = znamenitost.Opis,
-               Veomaznamenito = znamenitost.Veomaznamenito.Naziv,
-               Nezaobilazno = znamenitost.Nezaobilazno.Naziv 
-            }).ToList();
+
+            return Ok(_mapper.Map<IReadOnlyList<Znamenitost>, IReadOnlyList<ZnamenitostiToReturnDto>>(znamenitosti));
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<ZnamenitostiToReturnDto>> GetZnamenitost(int id)
         {
             var spec = new veomaznameniteinezaobilazneSpecifications(id);
-           var znamenitost =  await _znamenitostRepo.GetEntityWithSpec(spec);
-           return new ZnamenitostiToReturnDto
-           {
-               Id = znamenitost.Id,
-               Naziv = znamenitost.Naziv,
-               Koordinate = znamenitost.Koordinate,
-               Opis = znamenitost.Opis,
-               Veomaznamenito = znamenitost.Veomaznamenito.Naziv,
-               Nezaobilazno = znamenitost.Nezaobilazno.Naziv 
-           };
+            var znamenitost = await _znamenitostRepo.GetEntityWithSpec(spec);
+            return _mapper.Map<Znamenitost, ZnamenitostiToReturnDto>(znamenitost);
         }
         [HttpGet("veomaznamenite")]
 
