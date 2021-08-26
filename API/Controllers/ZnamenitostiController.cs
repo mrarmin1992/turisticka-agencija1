@@ -2,19 +2,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using API.Dtos;
+using API.Errors;
 using AutoMapper;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Specifications;
 using Infrastructure.Data;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ZnamenitostiController : ControllerBase
+    public class ZnamenitostiController : BaseApiController
     {
         private readonly IGenericRepository<Znamenitost> _znamenitostRepo;
         private readonly IGenericRepository<Veomaznamenito> _veomaznamenitoRepo;
@@ -42,10 +42,14 @@ namespace API.Controllers
         }
 
         [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ZnamenitostiToReturnDto>> GetZnamenitost(int id)
         {
             var spec = new veomaznameniteinezaobilazneSpecifications(id);
             var znamenitost = await _znamenitostRepo.GetEntityWithSpec(spec);
+
+            if(znamenitost == null) return NotFound(new ApiResponse(404));
             return _mapper.Map<Znamenitost, ZnamenitostiToReturnDto>(znamenitost);
         }
         [HttpGet("veomaznamenite")]
