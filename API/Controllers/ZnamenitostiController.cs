@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using API.Dtos;
 using API.Errors;
+using API.Helpers;
 using AutoMapper;
 using Core.Entities;
 using Core.Interfaces;
@@ -32,13 +33,15 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IReadOnlyList<ZnamenitostiToReturnDto>>> GetZnamenitosti()
+        public async Task<ActionResult<Pagination<ZnamenitostiToReturnDto>>> GetZnamenitosti([FromQuery]ZnamenitostSpecParams znamenitostiparams)
         {
-            var spec = new veomaznameniteinezaobilazneSpecifications();
-
+            var spec = new veomaznameniteinezaobilazneSpecifications(znamenitostiparams);
+            var countSpec = new ZnamenitostiwithFiltersForCountSpecifications(znamenitostiparams);
+            var totalItems = await _znamenitostRepo.CountAsync(countSpec);
             var znamenitosti = await _znamenitostRepo.ListAsync(spec);
+            var data = _mapper.Map<IReadOnlyList<Znamenitost>, IReadOnlyList<ZnamenitostiToReturnDto>>(znamenitosti);
 
-            return Ok(_mapper.Map<IReadOnlyList<Znamenitost>, IReadOnlyList<ZnamenitostiToReturnDto>>(znamenitosti));
+            return Ok(new Pagination<ZnamenitostiToReturnDto>(znamenitostiparams.PageIndex, znamenitostiparams.PageSize, totalItems, data));
         }
 
         [HttpGet("{id}")]

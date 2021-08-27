@@ -28,6 +28,7 @@ namespace Infrastructure
 
         public async Task<IReadOnlyList<Znamenitost>> GetZnamenitostAsync()
         {
+            
             return await _context.Znamenitosti
             .Include(p =>p.Nezaobilazno)
             .Include(p =>p.Veomaznamenito)
