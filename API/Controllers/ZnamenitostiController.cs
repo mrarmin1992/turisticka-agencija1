@@ -7,6 +7,7 @@ using AutoMapper;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Specifications;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -40,8 +41,8 @@ namespace API.Controllers
         {
             var spec = new veomaznameniteinezaobilazneSpecifications(znamenitostiparams);
             var countSpec = new ZnamenitostiwithFiltersForCountSpecifications(znamenitostiparams);
-            var totalItems = await _znamenitostRepo.CountAsync(countSpec);
-            var znamenitosti = await _znamenitostRepo.ListAsync(spec);
+            var totalItems = await _unitOfWork.Repository<Znamenitost>().CountAsync(countSpec);
+            var znamenitosti = await _unitOfWork.Repository<Znamenitost>().ListAsync(spec);
             var data = _mapper.Map<IReadOnlyList<Znamenitost>, IReadOnlyList<ZnamenitostiToReturnDto>>(znamenitosti);
 
             return Ok(new Pagination<ZnamenitostiToReturnDto>(znamenitostiparams.PageIndex, znamenitostiparams.PageSize, totalItems, data));
@@ -53,7 +54,7 @@ namespace API.Controllers
         public async Task<ActionResult<ZnamenitostiToReturnDto>> GetZnamenitost(int id)
         {
             var spec = new veomaznameniteinezaobilazneSpecifications(id);
-            var znamenitost = await _znamenitostRepo.GetEntityWithSpec(spec);
+            var znamenitost = await _unitOfWork.Repository<Znamenitost>().GetEntityWithSpec(spec);
 
             if (znamenitost == null) return NotFound(new ApiResponse(404));
             return _mapper.Map<Znamenitost, ZnamenitostiToReturnDto>(znamenitost);
@@ -72,7 +73,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
-
+ [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ZnamenitostiToReturnDto>> CreateZnamenitost(ZnamenitostToCreate znamenitostToCreate)
         {
             var znamenitost = _mapper.Map<ZnamenitostToCreate, Znamenitost>(znamenitostToCreate);
@@ -87,7 +88,7 @@ namespace API.Controllers
         }
 
         [HttpPut("{id}")]
-
+     [Authorize(Roles = "Admin")]
         public async Task<ActionResult<ZnamenitostiToReturnDto>> UpdateZnamenitost(int id, ZnamenitostiToReturnDto znamenitostToUpdate)
         {
             var znamenitost = await _unitOfWork.Repository<Znamenitost>().GetByIdAsync(id);
@@ -103,7 +104,7 @@ namespace API.Controllers
             return _mapper.Map<Znamenitost, ZnamenitostiToReturnDto>(znamenitost);
         }
         [HttpDelete("{id}")]
-
+     [Authorize(Roles = "Admin")]
         public async Task<ActionResult> DeleteZnamenitost(int id)
         {
             var znamenitost = await _unitOfWork.Repository<Znamenitost>().GetByIdAsync(id);

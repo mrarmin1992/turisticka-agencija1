@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace Infrastructure.Data.Migrations
+namespace Infrastructure.Migrations
 {
     public partial class InitialCreate : Migration
     {
@@ -42,8 +42,8 @@ namespace Infrastructure.Data.Migrations
                     Opis = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
                     Aktivan = table.Column<bool>(type: "INTEGER", nullable: false),
                     Koordinate = table.Column<string>(type: "TEXT", nullable: true),
-                    PictureUrl = table.Column<string>(type: "TEXT", nullable: false),
                     VeomaznamenitoId = table.Column<int>(type: "INTEGER", nullable: false),
+                    PictureUrl = table.Column<string>(type: "TEXT", nullable: false),
                     NezaobilaznoId = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -63,6 +63,34 @@ namespace Infrastructure.Data.Migrations
                         onDelete: ReferentialAction.Cascade);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "Photo",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    PictureUrl = table.Column<string>(type: "TEXT", nullable: true),
+                    FileName = table.Column<string>(type: "TEXT", nullable: true),
+                    IsMain = table.Column<bool>(type: "INTEGER", nullable: false),
+                    ZnamenitostId = table.Column<int>(type: "INTEGER", nullable: true),
+                    ProductId = table.Column<int>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Photo", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Photo_Znamenitosti_ZnamenitostId",
+                        column: x => x.ZnamenitostId,
+                        principalTable: "Znamenitosti",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Photo_ZnamenitostId",
+                table: "Photo",
+                column: "ZnamenitostId");
+
             migrationBuilder.CreateIndex(
                 name: "IX_Znamenitosti_NezaobilaznoId",
                 table: "Znamenitosti",
@@ -76,6 +104,9 @@ namespace Infrastructure.Data.Migrations
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Photo");
+
             migrationBuilder.DropTable(
                 name: "Znamenitosti");
 
