@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using API.Dtos;
 using API.Errors;
@@ -8,10 +7,8 @@ using AutoMapper;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Specifications;
-using Infrastructure.Data;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers
 {
@@ -22,9 +19,15 @@ namespace API.Controllers
         private readonly IGenericRepository<Nezaobilazno> _nezaobilaznoRepo;
         private readonly IMapper _mapper;
 
+        private readonly IUnitOfWork _unitOfWork;
+        private readonly IPhotoService _photoService;
+
         public ZnamenitostiController(IGenericRepository<Znamenitost> znamenitostRepo,
-        IGenericRepository<Veomaznamenito> veomaznamenitoRepo, IGenericRepository<Nezaobilazno> nezaobilaznoRepo, IMapper mapper)
+        IGenericRepository<Veomaznamenito> veomaznamenitoRepo, IGenericRepository<Nezaobilazno> nezaobilaznoRepo, IMapper mapper, IUnitOfWork unitOfWork, IPhotoService photoService)
         {
+            _photoService = photoService;
+            _unitOfWork = unitOfWork;
+
             _mapper = mapper;
             _nezaobilaznoRepo = nezaobilaznoRepo;
             _veomaznamenitoRepo = veomaznamenitoRepo;
@@ -33,7 +36,7 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<Pagination<ZnamenitostiToReturnDto>>> GetZnamenitosti([FromQuery]ZnamenitostSpecParams znamenitostiparams)
+        public async Task<ActionResult<Pagination<ZnamenitostiToReturnDto>>> GetZnamenitosti([FromQuery] ZnamenitostSpecParams znamenitostiparams)
         {
             var spec = new veomaznameniteinezaobilazneSpecifications(znamenitostiparams);
             var countSpec = new ZnamenitostiwithFiltersForCountSpecifications(znamenitostiparams);
@@ -52,7 +55,7 @@ namespace API.Controllers
             var spec = new veomaznameniteinezaobilazneSpecifications(id);
             var znamenitost = await _znamenitostRepo.GetEntityWithSpec(spec);
 
-            if(znamenitost == null) return NotFound(new ApiResponse(404));
+            if (znamenitost == null) return NotFound(new ApiResponse(404));
             return _mapper.Map<Znamenitost, ZnamenitostiToReturnDto>(znamenitost);
         }
         [HttpGet("veomaznamenite")]
@@ -66,6 +69,59 @@ namespace API.Controllers
         public async Task<ActionResult<IReadOnlyList<Nezaobilazno>>> GetNezaobilazno()
         {
             return Ok(await _nezaobilaznoRepo.ListAllAsync());
+        }
+
+        [HttpPost]
+
+        public async Task<ActionResult<ZnamenitostiToReturnDto>> CreateZnamenitost(ZnamenitostToCreate znamenitostToCreate)
+        {
+            var znamenitost = _mapper.Map<ZnamenitostToCreate, Znamenitost>(znamenitostToCreate);
+
+            _unitOfWork.Repository<Znamenitost>().Add(znamenitost);
+
+            var result = await _unitOfWork.Complete();
+
+            if (result <= 0) return BadRequest(new ApiResponse(400, "Problem creating product"));
+
+            return _mapper.Map<Znamenitost, ZnamenitostiToReturnDto>(znamenitost);
+        }
+
+        [HttpPut("{id}")]
+
+        public async Task<ActionResult<ZnamenitostiToReturnDto>> UpdateZnamenitost(int id, ZnamenitostiToReturnDto znamenitostToUpdate)
+        {
+            var znamenitost = await _unitOfWork.Repository<Znamenitost>().GetByIdAsync(id);
+
+            _mapper.Map(znamenitostToUpdate, znamenitost);
+
+            _unitOfWork.Repository<Znamenitost>().Update(znamenitost);
+
+            var result = await _unitOfWork.Complete();
+
+            if (result <= 0) return BadRequest(new ApiResponse(400, "Problem updating product"));
+
+            return _mapper.Map<Znamenitost, ZnamenitostiToReturnDto>(znamenitost);
+        }
+        [HttpDelete("{id}")]
+
+        public async Task<ActionResult> DeleteZnamenitost(int id)
+        {
+            var znamenitost = await _unitOfWork.Repository<Znamenitost>().GetByIdAsync(id);
+            foreach (var photo in znamenitost.Photos)
+            {
+                if (photo.Id > 18)
+                {
+                    _photoService.DeleteFromDisk(photo);
+                }
+            }
+
+            _unitOfWork.Repository<Znamenitost>().Delete(znamenitost);
+
+            var result = await _unitOfWork.Complete();
+
+            if (result <= 0) return BadRequest(new ApiResponse(400, "Problem deleting product"));
+
+            return Ok();
         }
 
     }
